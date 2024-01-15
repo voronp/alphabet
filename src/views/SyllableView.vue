@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
+import { onBeforeRouteLeave } from 'vue-router';
 import { useSyllableStore } from '@/stores/syllable';
 import { useSettingsStore } from '@/stores/settings';
 import { useTrainingsStore } from '@/stores/trainings';
@@ -35,20 +36,24 @@ const isDisappearing = ref(false);
 const isFireworksDisappearing = ref(false);
 const isFireworksVisible = ref(false);
 const isRestartAvailable = ref(false);
+const isInterrupted = ref(false);
 
 const isStarted = computed(() => syllableCount.value > 0);
-const isEnded = computed(() => syllableCount.value === settingsStore.answerCount);
+const isEnded = computed(() => syllableCount.value >= settingsStore.answerCount);
 
 const pause = async (timeout:number) => new Promise((res) => { setTimeout(() => res(true), timeout); });
 
 const oneStep = async () => {
+  if (isInterrupted.value) {
+    return;
+  }
   syllableStore.updateText();
   isDisappearing.value = false;
   syllableCount.value += 1;
   let seconds = 0;
   if (recognition) {
     recognition.start();
-    recognition.onresult = (event:SpeechRecognitionResult) => {
+    recognition.onresult = (event:SpeechRecognitionEvent) => {
       console.log(event);
     };
     recognition.onspeechend = () => {
@@ -67,6 +72,9 @@ const oneStep = async () => {
     await pause(1000);
     seconds += 1;
   }
+  if (isInterrupted.value) {
+    return;
+  }
   if (recognition) {
     recognition.stop();
   }
@@ -74,12 +82,18 @@ const oneStep = async () => {
   setText(syllableStore.text);
   speak();
   await waiter;
+  if (isInterrupted.value) {
+    return;
+  }
   isDisappearing.value = true;
   await pause(1000);
 };
 
 const startTraining = () => {
   const stepFn = async () => {
+    if (isInterrupted.value) {
+      return;
+    }
     if (isEnded.value) {
       console.log('done');
       trainingsStore.resultItems.push({
@@ -115,9 +129,24 @@ const onClickPause = () => {
 };
 
 const onClickRestart = () => {
+  isInterrupted.value = false;
   syllableCount.value = 0;
   isRestartAvailable.value = false;
 };
+
+const interrupt = () => {
+  isInterrupted.value = true;
+  if (recognition) {
+    recognition.stop();
+  }
+  isRestartAvailable.value = true;
+  syllableCount.value = 0;
+};
+
+onBeforeRouteLeave(() => {
+  console.log("leave");
+  interrupt();
+});
 </script>
 
 <style scoped>

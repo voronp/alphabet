@@ -7,7 +7,6 @@ interface IWindow extends Window {
 const { webkitSpeechRecognition, webkitSpeechGrammarList } : IWindow = <IWindow><unknown>window;
 
 const grammar = `#JSGF V1.0; grammar syllables; public <syllable> = ${allCombinations.join(' | ')} ;`;
-console.log(grammar);
 // eslint-disable-next-line new-cap
 export const recognition = typeof webkitSpeechRecognition !== 'undefined' ? new webkitSpeechRecognition() : undefined;
 

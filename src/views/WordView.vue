@@ -1,12 +1,12 @@
 <template>
-  <div class="syllable-wrapper">
+  <div class="word-wrapper">
     <div class="title-container">{{ title }}</div>
-    <div class="syllable-container">
+    <div class="word-container">
       <div 
         v-if="isStarted" 
-        :class="{'center-icon': true, 'syllable-content': true, 'is-paused': isPaused, 'is-disappearing': isDisappearing}" 
-        @click="onClickSyllable"
-      >{{ syllableStore.text }}</div>
+        :class="{'center-icon': true, 'word-content': true, 'is-paused': isPaused, 'is-disappearing': isDisappearing}" 
+        @click="onClickWord"
+      >{{ wordStore.text }}</div>
       <div v-show="!isStarted" class="go-content center-icon">
         <Button icon="pi pi-caret-right" severity="success" rounded outlined size="large" @click="onClickStart"/>
       </div>
@@ -25,23 +25,25 @@
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import { useRoute } from 'vue-router';
-import { useSyllableStore } from '@/stores/syllable';
+import { useWordStore } from '@/stores/word';
 import { useSettingsStore } from '@/stores/settings';
 import { useTrainingsStore } from '@/stores/trainings';
 import { speak, setText } from '@/lib/voice';
 import { recognition } from '@/lib/recognition';
+import { useRecognition } from '@/hooks/useRecognition';
 import BaseFireworksVue from '@/components/BaseFireworks.vue';
 
 const route = useRoute();
-const syllableStore = useSyllableStore();
+const wordStore = useWordStore();
 const settingsStore = useSettingsStore();
 const trainingsStore = useTrainingsStore();
-const syllableCount = ref(0);
+const wordCount = ref(0);
 const isPaused = ref(false);
 const isDisappearing = ref(false);
 const isFireworksDisappearing = ref(false);
 const isFireworksVisible = ref(false);
 const isRestartAvailable = ref(false);
+const { isMatched, tryRecognize, setTarget } = useRecognition();
 
 const syllMult = (count:number) => {
   if (count === 1) return 'слог';
@@ -50,21 +52,25 @@ const syllMult = (count:number) => {
 };
 
 const consonantCount = computed(() => (route.params.consonants ? [Number(route.params.consonants)] : (route.params.vowels === '1' ? [1, 2] : [Number(route.params.vowels)])));
+wordStore.setParams(Number(route.params.vowels), consonantCount.value);
 const title = computed(() => `Слова (${route.params.vowels} ${syllMult(Number(route.params.vowels))}, ${consonantCount.value.join('-')} Согласныx)`);
-const isStarted = computed(() => syllableCount.value > 0);
-const isEnded = computed(() => syllableCount.value === settingsStore.answerCount);
+const isStarted = computed(() => wordCount.value > 0);
+const isEnded = computed(() => wordCount.value === settingsStore.answerCount);
 
 const pause = async (timeout:number) => new Promise((res) => { setTimeout(() => res(true), timeout); });
 
 const oneStep = async () => {
-  syllableStore.updateText();
+  wordStore.updateText();
+  setTarget(wordStore.text);
   isDisappearing.value = false;
-  syllableCount.value += 1;
+  wordCount.value += 1;
   let seconds = 0;
   if (recognition) {
     recognition.start();
-    recognition.onresult = (event:SpeechRecognitionResult) => {
+    recognition.onresult = (event:SpeechRecognitionEvent) => {
       console.log(event);
+      const isMatch = tryRecognize(event);
+      console.log(isMatch);
     };
     recognition.onspeechend = () => {
       console.log('onspeechend');
@@ -86,7 +92,7 @@ const oneStep = async () => {
     recognition.stop();
   }
   const waiter = pause(1500);
-  setText(syllableStore.text);
+  setText(wordStore.text);
   speak();
   await waiter;
   isDisappearing.value = true;
@@ -94,14 +100,15 @@ const oneStep = async () => {
 };
 
 const startTraining = () => {
+  console.log(wordStore.matchingWords);
   const stepFn = async () => {
     if (isEnded.value) {
       console.log('done');
       trainingsStore.resultItems.push({
         datetime: new Date(),
-        type: 'syllable',
-        totalItems: syllableCount.value,
-        successItems: syllableCount.value,
+        type: 'word',
+        totalItems: wordCount.value,
+        successItems: wordCount.value,
       });
       isFireworksVisible.value = true;
       await pause(3000);
@@ -120,7 +127,7 @@ const startTraining = () => {
 
 const onClickStart = () => startTraining();
 
-const onClickSyllable = () => {
+const onClickWord = () => {
   if (isEnded.value) return;
   isPaused.value = true;
 };
@@ -130,20 +137,20 @@ const onClickPause = () => {
 };
 
 const onClickRestart = () => {
-  syllableCount.value = 0;
+  wordCount.value = 0;
   isRestartAvailable.value = false;
 };
 </script>
 
 <style scoped>
-.syllable-wrapper {
+.word-wrapper {
   flex: 1 1 auto;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
 }
-.syllable-content {
+.word-content {
   font-size: 10rem;
   &.is-paused {
     opacity: 0.5;
