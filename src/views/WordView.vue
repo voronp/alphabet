@@ -71,13 +71,11 @@ const oneStep = async () => {
   if (recognition) {
     recognition.start();
     recognition.onresult = (event:SpeechRecognitionEvent) => {
-      console.log(event);
       const isMatch = tryRecognize(event);
       console.log(isMatch);
     };
     recognition.onspeechend = () => {
       console.log('onspeechend');
-      // recognition.stop();
     };
     recognition.onnomatch = (event:unknown) => {
       console.log('onnomatch', event);
@@ -95,7 +93,9 @@ const oneStep = async () => {
   if (isInterrupted.value) {
     return;
   }
+  
   if (recognition) {
+    console.log('recognition.stop');
     recognition.stop();
   }
   const waiter = pause(1500);
@@ -106,7 +106,7 @@ const oneStep = async () => {
     return;
   }
   isDisappearing.value = true;
-  await pause(1000);
+  await pause(settingsStore.pauseDelay);
 };
 
 const startTraining = () => {

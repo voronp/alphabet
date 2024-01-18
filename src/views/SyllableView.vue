@@ -86,7 +86,7 @@ const oneStep = async () => {
     return;
   }
   isDisappearing.value = true;
-  await pause(1000);
+  await pause(settingsStore.pauseDelay);
 };
 
 const startTraining = () => {

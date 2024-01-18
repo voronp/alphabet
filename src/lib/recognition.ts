@@ -19,7 +19,7 @@ try {
 }
 try {
   recognition.grammars = speechRecognitionList;
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.lang = 'ru-RU';
   recognition.interimResults = true;
   recognition.maxAlternatives = 3;
