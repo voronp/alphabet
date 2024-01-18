@@ -4,6 +4,6 @@
 
 <template>
   <main>
-    home
+    Привет!
   </main>
 </template>

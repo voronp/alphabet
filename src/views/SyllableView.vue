@@ -144,7 +144,7 @@ const interrupt = () => {
 };
 
 onBeforeRouteLeave(() => {
-  console.log("leave");
+  console.log('leave');
   interrupt();
 });
 </script>

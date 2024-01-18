@@ -10,6 +10,8 @@ export const useWordStore = defineStore('word', () => {
   const text = ref('');
   const vowelCount = ref(1);
   const consonantCount = ref([1]);
+  let unique:Record<string, boolean> = {};
+  let repeated = 0;
 
   const matchingWords = computed(() => [
     ...pigs.filter((w) => filterWordFn(w, vowelCount.value, consonantCount.value)),
@@ -22,18 +24,30 @@ export const useWordStore = defineStore('word', () => {
     consonantCount.value = c;
   };
 
-  const updateText = () => {
+  const updateText = ():void => {
     if (!matchingWords.value.length) {
       text.value = '-';
       return;
     }
     const index = Math.floor(Math.random() * matchingWords.value.length);
     text.value = matchingWords.value[index];
+    if (unique[text.value]) {
+      repeated += 1;
+      if (repeated <= 10) return updateText();
+    }
+    unique[text.value] = true;
+    repeated = 0;
   };
+
+  const resetUnique = () => {
+    unique = {};
+  };
+
   return {
     text,
     updateText,
     setParams,
+    resetUnique,
     matchingWords,
   };
 });

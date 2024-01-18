@@ -1,6 +1,5 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { voices } from '@/lib/voice';
 
 export interface ResultItem {
   datetime: Date;

@@ -8,7 +8,7 @@ export const useRecognition = () => {
     isMatched.value = false;
   };
   const tryRecognize = (rec:SpeechRecognitionEvent):boolean => {
-    isMatched.value = isMatched.value || [...rec.results].some((r) => [...r].some((t) => t.transcript === target));
+    isMatched.value = isMatched.value || [...rec.results].some((r) => [...r].some((t) => t.transcript.trim().toLowerCase() === target));
     return isMatched.value;
   };
 

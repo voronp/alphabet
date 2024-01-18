@@ -4,7 +4,7 @@
     <div class="word-container">
       <div 
         v-if="isStarted" 
-        :class="{'center-icon': true, 'word-content': true, 'is-paused': isPaused, 'is-disappearing': isDisappearing}" 
+        :class="{'center-icon': true, 'word-content': true, 'is-paused': isPaused, 'is-disappearing': isDisappearing, 'is-matched': isMatched}" 
         @click="onClickWord"
       >{{ wordStore.text }}</div>
       <div v-show="!isStarted" class="go-content center-icon">
@@ -22,9 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import { useRoute } from 'vue-router';
+import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import { useWordStore } from '@/stores/word';
 import { useSettingsStore } from '@/stores/settings';
 import { useTrainingsStore } from '@/stores/trainings';
@@ -52,14 +52,17 @@ const syllMult = (count:number) => {
 };
 
 const consonantCount = computed(() => (route.params.consonants ? [Number(route.params.consonants)] : (route.params.vowels === '1' ? [1, 2] : [Number(route.params.vowels)])));
-wordStore.setParams(Number(route.params.vowels), consonantCount.value);
 const title = computed(() => `Слова (${route.params.vowels} ${syllMult(Number(route.params.vowels))}, ${consonantCount.value.join('-')} Согласныx)`);
 const isStarted = computed(() => wordCount.value > 0);
 const isEnded = computed(() => wordCount.value === settingsStore.answerCount);
+const isInterrupted = ref(false);
 
 const pause = async (timeout:number) => new Promise((res) => { setTimeout(() => res(true), timeout); });
 
 const oneStep = async () => {
+  if (isInterrupted.value) {
+    return;
+  }
   wordStore.updateText();
   setTarget(wordStore.text);
   isDisappearing.value = false;
@@ -84,9 +87,13 @@ const oneStep = async () => {
     };
   }
   while (seconds * 1000 < settingsStore.answerDelay || isPaused.value) {
+    if (isMatched.value) break;
     // eslint-disable-next-line no-await-in-loop
     await pause(1000);
     seconds += 1;
+  }
+  if (isInterrupted.value) {
+    return;
   }
   if (recognition) {
     recognition.stop();
@@ -95,13 +102,20 @@ const oneStep = async () => {
   setText(wordStore.text);
   speak();
   await waiter;
+  if (isInterrupted.value) {
+    return;
+  }
   isDisappearing.value = true;
   await pause(1000);
 };
 
 const startTraining = () => {
   console.log(wordStore.matchingWords);
+  wordStore.resetUnique();
   const stepFn = async () => {
+    if (isInterrupted.value) {
+      return;
+    }
     if (isEnded.value) {
       console.log('done');
       trainingsStore.resultItems.push({
@@ -137,9 +151,32 @@ const onClickPause = () => {
 };
 
 const onClickRestart = () => {
+  isInterrupted.value = false;
   wordCount.value = 0;
   isRestartAvailable.value = false;
 };
+
+const interrupt = () => {
+  isInterrupted.value = true;
+  if (recognition) {
+    recognition.stop();
+  }
+  isRestartAvailable.value = true;
+  wordCount.value = 0;
+};
+
+onBeforeRouteLeave(() => {
+  console.log('leave');
+  interrupt();
+});
+
+watch([
+  () => route.params.vowels,
+  consonantCount,
+], ([v, c]) => {
+  wordStore.setParams(Number(v), c);
+}, { immediate: true });
+
 </script>
 
 <style scoped>
@@ -154,6 +191,10 @@ const onClickRestart = () => {
   font-size: 10rem;
   &.is-paused {
     opacity: 0.5;
+  }
+  &.is-matched {
+    color: forestgreen;
+    transition: color 0.5s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 1s cubic-bezier(0.075, 0.82, 0.165, 1);
   }
 }
 .center-icon {

@@ -1,7 +1,6 @@
-export const voices = window.speechSynthesis.getVoices();
 export const speech = new SpeechSynthesisUtterance();
 
-speech.lang = 'ru-RU';
+// speech.lang = 'ru-RU';
 speech.rate = 1;
 speech.pitch = 1;
 
@@ -28,3 +27,10 @@ export const resume = () => {
 export const cancel = () => {
   window.speechSynthesis.cancel();
 };
+
+export const getVoices = ():Promise<SpeechSynthesisVoice[]> => new Promise((res) => {
+  window.speechSynthesis.addEventListener('voiceschanged', () => {
+    const voices = window.speechSynthesis.getVoices();
+    res(voices);
+  });
+});

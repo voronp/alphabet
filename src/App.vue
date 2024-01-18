@@ -29,7 +29,7 @@
     </div>
   </Sidebar>
   <Sidebar v-model:visible="settingsStore.isSettingsOpened" header="Настройки" position="right">
-
+    <SettingsForm />
   </Sidebar>
   <RouterView />
 </template>
@@ -40,6 +40,7 @@ import Button from 'primevue/button';
 import Sidebar from 'primevue/sidebar';
 import { ref } from 'vue';
 import { useSettingsStore } from './stores/settings';
+import SettingsForm from './components/SettingsForm.vue';
 
 const isMenuOpened = ref(false);
 const settingsStore = useSettingsStore();
@@ -50,9 +51,12 @@ const onClickSettings = () => {
 const onClickMenu = () => {
   isMenuOpened.value = true;
 };
+
+settingsStore.loadVoices();
 </script>
 
 <style scoped>
+
 header {
   line-height: 1.5;
   max-height: 100vh;
