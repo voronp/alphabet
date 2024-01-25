@@ -6,7 +6,9 @@
       </template>
 
       <template #center>
-
+        <router-link to="/" >
+          <Button icon="pi pi-home" severity="secondary" text rounded size="large" />
+        </router-link>
       </template>
 
       <template #end>
@@ -26,6 +28,18 @@
     </div>
     <div class="left-menu-item">
       <RouterLink to="/word/2">Слова (2 слога)</RouterLink>
+    </div>
+    <div class="left-menu-item">
+      <RouterLink to="/word/3">Слова (3 слога)</RouterLink>
+    </div>
+    <div class="left-menu-item">
+      <RouterLink to="/word/3/4">Слова (3 слога, 4 согласных)</RouterLink>
+    </div>
+    <div class="left-menu-item">
+      <RouterLink to="/word/4">Слова (4 слога)</RouterLink>
+    </div>
+    <div class="left-menu-item">
+      <RouterLink to="/word/4/5">Слова (4 слога, 5 согласных)</RouterLink>
     </div>
   </Sidebar>
   <Sidebar v-model:visible="settingsStore.isSettingsOpened" header="Настройки" position="right">

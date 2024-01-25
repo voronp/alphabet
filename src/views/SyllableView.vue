@@ -22,14 +22,14 @@ import Button from 'primevue/button';
 import { onBeforeRouteLeave } from 'vue-router';
 import { useSyllableStore } from '@/stores/syllable';
 import { useSettingsStore } from '@/stores/settings';
-import { useTrainingsStore } from '@/stores/trainings';
+import { useProfileStore } from '@/stores/profile';
 import { speak, setText } from '@/lib/voice';
 import { recognition } from '@/lib/recognition';
 import BaseFireworksVue from '@/components/BaseFireworks.vue';
 
 const syllableStore = useSyllableStore();
 const settingsStore = useSettingsStore();
-const trainingsStore = useTrainingsStore();
+const trainingsStore = useProfileStore();
 const syllableCount = ref(0);
 const isPaused = ref(false);
 const isDisappearing = ref(false);

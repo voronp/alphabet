@@ -8,10 +8,12 @@ export interface ResultItem {
   successItems: number;
 }
 
-export const useTrainingsStore = defineStore('trainings', () => {
+export const useProfileStore = defineStore('profile', () => {
   const resultItems:ResultItem[] = [];
+  const userName = ref('');
 
   return {
     resultItems,
+    userName,
   };
 }, { persist: true });
