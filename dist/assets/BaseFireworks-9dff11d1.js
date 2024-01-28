@@ -1,0 +1,1 @@
+import{_ as s,l as o,e as _,f as e}from"./index-472f9062.js";const t={},c={class:"pyro"},n=e("div",{class:"before"},null,-1),r=e("div",{class:"after"},null,-1),a=[n,r];function i(l,d){return o(),_("div",c,a)}const u=s(t,[["render",i]]);export{u as B};
