@@ -54,7 +54,6 @@ watch([
   () => settingsStore.isVoiceEnabled,
   () => profileStore.userName,
 ], ([voice, isEnabled, userName]) => {
-  console.log(voice, isEnabled);
   if (voice && isEnabled) {
     // say hello
     sayHello(userName);

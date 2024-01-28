@@ -28,7 +28,6 @@ export const useSettingsStore = defineStore('settings', () => {
   const loadVoices = async () => {
     voices.value = await getVoices();
     nextTick(() => {
-      console.log(voiceOptions.value);
       if (voiceOptions.value.length) {
         voice.value = voiceOptions.value.find((v) => v.name.includes('female'))?.id || voiceOptions.value[0].id;
         if (isVoiceEnabled.value === undefined) { isVoiceEnabled.value = true; }

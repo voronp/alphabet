@@ -18,6 +18,9 @@
         <Button icon="pi pi-refresh" severity="success" rounded outlined size="large" @click="onClickRestart"/>
       </div>
     </div>
+    <div v-if="isStarted && !isReallyEnded" class="bottom-container">
+      <Button icon="pi pi-step-forward" severity="success" rounded outlined size="large" @click="onClickSkip"/>
+    </div>
   </div>
 </template>
 
@@ -56,6 +59,9 @@ const title = computed(() => `Слова (${route.params.vowels} ${syllMult(Numb
 const isStarted = computed(() => wordCount.value > 0);
 const isEnded = computed(() => wordCount.value === settingsStore.answerCount);
 const isInterrupted = ref(false);
+const isSkipped = ref(false);
+// last word said, recognition done, voice ended
+const isReallyEnded = ref(false);
 
 const pause = async (timeout:number) => new Promise((res) => { setTimeout(() => res(true), timeout); });
 
@@ -69,22 +75,30 @@ const oneStep = async () => {
   wordCount.value += 1;
   let seconds = 0;
   if (recognition) {
-    recognition.start();
-    recognition.onresult = (event:SpeechRecognitionEvent) => {
-      const isMatch = tryRecognize(event);
-      console.log(isMatch);
-    };
-    recognition.onspeechend = () => {
-      console.log('onspeechend');
-    };
-    recognition.onnomatch = (event:unknown) => {
-      console.log('onnomatch', event);
-    };
-    recognition.onerror = (event:unknown) => {
-      console.log('onerror', event);
-    };
+    try {
+      recognition.start();
+      recognition.onresult = (event:SpeechRecognitionEvent) => {
+        const isMatch = tryRecognize(event);
+        console.log(isMatch);
+      };
+      recognition.onspeechend = () => {
+        console.log('onspeechend');
+      };
+      recognition.onnomatch = (event:unknown) => {
+        console.log('onnomatch', event);
+      };
+      recognition.onerror = (event:unknown) => {
+        console.log('onerror', event);
+      };
+    } catch (e) {
+      console.log(e);
+    }
   }
   while (seconds * 1000 < settingsStore.answerDelay || isPaused.value) {
+    if (isSkipped.value) {
+      isSkipped.value = false;
+      break;
+    }
     if (isMatched.value) break;
     // eslint-disable-next-line no-await-in-loop
     await pause(1000);
@@ -107,10 +121,15 @@ const oneStep = async () => {
   }
   isDisappearing.value = true;
   await pause(settingsStore.pauseDelay);
+  isSkipped.value = false;
+  if (isEnded.value) {
+    isReallyEnded.value = true;
+  }
 };
 
 const startTraining = () => {
   console.log(wordStore.matchingWords);
+  isReallyEnded.value = false;
   wordStore.resetUnique();
   const stepFn = async () => {
     if (isInterrupted.value) {
@@ -154,6 +173,10 @@ const onClickRestart = () => {
   isInterrupted.value = false;
   wordCount.value = 0;
   isRestartAvailable.value = false;
+};
+
+const onClickSkip = () => {
+  isSkipped.value = true;
 };
 
 const interrupt = () => {
@@ -213,5 +236,9 @@ watch([
 }
 .title-container {
   align-self: flex-start;
+}
+.bottom-container {
+  position: absolute;
+  bottom: 4px;
 }
 </style>
